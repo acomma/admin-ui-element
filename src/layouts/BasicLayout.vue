@@ -29,6 +29,7 @@ const doLogout = () => {
     <el-container class="basic-layout h-screen">
         <el-aside width="200px">
             <el-scrollbar>
+                <div class="logo"></div>
                 <el-menu router>
                     <el-sub-menu index="system">
                         <template #title>
@@ -77,6 +78,10 @@ const doLogout = () => {
 .basic-layout .el-aside {
     color: var(--el-text-color-primary);
     background: var(--el-color-primary-light-8);
+}
+
+.basic-layout .el-aside .logo {
+    height: 60px;
 }
 
 .basic-layout .el-menu {
