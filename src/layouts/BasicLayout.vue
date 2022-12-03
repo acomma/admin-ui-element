@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { Setting } from '@element-plus/icons-vue'
-import { reactive, toRefs } from 'vue'
+import { reactive, toRefs, onBeforeMount } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { useLoginUserStore } from '../stores/login-user'
 
 const router = useRouter()
 const state = reactive({
     avatar: '../duck.svg'
 })
 const { avatar } = toRefs(state)
+const loginUserStore = useLoginUserStore()
 
 const handleCommand = (command: string | number | object) => {
     if (command === 'logout') {
@@ -23,6 +25,25 @@ const doLogout = () => {
             router.replace({ path: '/login' })
         })
 }
+
+interface Menu {
+    menuId: bigint;
+    parentId: bigint;
+    name: string;
+    path: string;
+    children: Menu[];
+}
+
+let menus: Menu[] = reactive([])
+
+onBeforeMount(() => {
+    const userId = loginUserStore.getUserId
+    axios.get(`/users/${userId}/menus`)
+        .then((response) => {
+            const data = response.data.data
+            menus.push(...data)
+        })
+})
 </script>
 
 <template>
@@ -31,18 +52,23 @@ const doLogout = () => {
             <el-scrollbar>
                 <div class="logo"></div>
                 <el-menu router>
-                    <el-sub-menu index="system">
-                        <template #title>
-                            <el-icon>
-                                <Setting />
-                            </el-icon>
-                            系统管理
+                    <template v-for="menu in menus">
+                        <template v-if="menu.children.length > 0">
+                            <el-sub-menu :index="`${menu.menuId}`">
+                                <template #title>
+                                    <el-icon>
+                                        <Setting />
+                                    </el-icon>
+                                    {{ menu.name }}
+                                </template>
+                                <el-menu-item v-for="child in menu.children" :index="`${child.menuId}`"
+                                    :route="child.path">{{ child.name }}</el-menu-item>
+                            </el-sub-menu>
                         </template>
-                        <el-menu-item index="menu" route="/menu">菜单管理</el-menu-item>
-                        <el-menu-item index="role" route="/role">角色管理</el-menu-item>
-                        <el-menu-item index="user" route="/user">用户管理</el-menu-item>
-                        <el-menu-item index="menu-action" route="/menu/action">菜单操作</el-menu-item>
-                    </el-sub-menu>
+                        <template v-else>
+                            <el-menu-item :index="`${menu.menuId}`" :route="menu.path">{{ menu.name }}</el-menu-item>
+                        </template>
+                    </template>
                 </el-menu>
             </el-scrollbar>
         </el-aside>
